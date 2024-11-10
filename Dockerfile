@@ -5,7 +5,7 @@ FROM openjdk:11-jre-slim
 WORKDIR /app
 
 # Copy the Spring Boot JAR file from the host into the container
-COPY target/enterprise-app.jar app.jar  # Adjust 'enterprise-app.jar' if needed
+COPY build/libs/enterprise-app-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose the application port (matches your .env PORT variable)
 EXPOSE 8080
