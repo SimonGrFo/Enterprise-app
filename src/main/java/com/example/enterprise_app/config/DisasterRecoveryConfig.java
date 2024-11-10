@@ -173,7 +173,6 @@ public class DisasterRecoveryConfig {
         }
 
         private void alertAdministrators(Exception e) {
-            // TODO: Implement alerting mechanism (email, SMS, monitoring system, etc.)
             log.error("Critical backup failure. Administrator notification required.", e);
         }
 

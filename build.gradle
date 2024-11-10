@@ -13,7 +13,7 @@ repositories {
 }
 
 ext {
-    jjwtVersion = '0.11.5'  // Equivalent to the ${jjwt.version} in Maven
+    jjwtVersion = '0.11.5'
 }
 
 dependencies {
@@ -49,7 +49,7 @@ test {
 }
 
 springBoot {
-    mainClass = 'com.example.enterprise_app.EnterpriseApplication'  // Correct Spring Boot 3.x main class specification
+    mainClass = 'com.example.enterprise_app.EnterpriseApplication'
 }
 
 tasks.withType(JavaCompile) {
