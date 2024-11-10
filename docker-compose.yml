@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  db:
+  db-primary:
     image: postgres:13
-    container_name: postgres_db
+    container_name: postgres_db_primary
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -11,15 +11,36 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_primary:/var/lib/postgresql/data
     networks:
       - my_network
+    command: >
+      -c wal_level=replica
+      -c max_wal_senders=2
+      -c max_replication_slots=2
+
+  db-secondary:
+    image: postgres:13
+    container_name: postgres_db_secondary
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data_secondary:/var/lib/postgresql/data
+    networks:
+      - my_network
+    depends_on:
+      - db-primary
 
   app:
     build: .
     container_name: spring_boot_app
     depends_on:
-      - db
+      - db-primary
+      - db-secondary
     environment:
       SPRING_DATASOURCE_URL: ${DATABASE_URL}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
@@ -31,9 +52,15 @@ services:
       - "${PORT:-8080}:${PORT:-8080}"
     networks:
       - my_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  postgres_data:
+  postgres_data_primary:
+  postgres_data_secondary:
 
 networks:
   my_network:

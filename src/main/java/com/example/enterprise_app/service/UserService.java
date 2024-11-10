@@ -1,7 +1,6 @@
 package com.example.enterprise_app.service;
 
-import com.example.enterprise_app.dto.SignupRequest;
-import com.example.enterprise_app.dto.UserDto;
+import com.example.enterprise_app.dto.*;
 import com.example.enterprise_app.model.ERole;
 import com.example.enterprise_app.model.Role;
 import com.example.enterprise_app.model.User;
@@ -31,17 +30,13 @@ public class UserService {
 
     @Transactional
     public UserDto createUser(SignupRequest signupRequest) {
-        // Validate if username is already taken
         if (userRepository.existsByUsername(signupRequest.getUsername())) {
             throw new RuntimeException("Username is already taken!");
         }
-
-        // Validate if email is already in use
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
             throw new RuntimeException("Email is already in use!");
         }
 
-        // Create new user
         User user = new User();
         user.setUsername(signupRequest.getUsername());
         user.setEmail(signupRequest.getEmail());
@@ -92,6 +87,53 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    @Transactional
+    public UserDto updateUser(String username, UpdateUserRequest updateRequest) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().isEmpty()) {
+            if (!user.getEmail().equals(updateRequest.getEmail()) &&
+                    userRepository.existsByEmail(updateRequest.getEmail())) {
+                throw new RuntimeException("Email is already in use!");
+            }
+            user.setEmail(updateRequest.getEmail());
+        }
+
+        if (updateRequest.getRoles() != null && !updateRequest.getRoles().isEmpty()) {
+            Set<Role> roles = new HashSet<>();
+            updateRequest.getRoles().forEach(roleName -> {
+                Role role = roleRepository.findByName(ERole.valueOf("ROLE_" + roleName.toUpperCase()))
+                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+                roles.add(role);
+            });
+            user.setRoles(roles);
+        }
+
+        return convertToDto(userRepository.save(user));
+    }
+
+    @Transactional
+    public void changePassword(String username, ChangePasswordRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void toggleUserStatus(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setActive(!user.isActive());
+        userRepository.save(user);
+    }
+
     private UserDto convertToDto(User user) {
         UserDto dto = new UserDto();
         dto.setUsername(user.getUsername());
@@ -99,6 +141,7 @@ public class UserService {
         dto.setRoles(user.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(Collectors.toSet()));
+        dto.setActive(user.isActive());
         return dto;
     }
 }
