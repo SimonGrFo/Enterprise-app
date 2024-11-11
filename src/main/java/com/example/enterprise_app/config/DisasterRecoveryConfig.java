@@ -157,7 +157,6 @@ public class DisasterRecoveryConfig {
         }
 
         private void secureDelete(File file) throws IOException {
-            // Overwrite file with random data before deletion
             if (file.exists()) {
                 try (var os = Files.newOutputStream(file.toPath())) {
                     byte[] random = new byte[4096];
