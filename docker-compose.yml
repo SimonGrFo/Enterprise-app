@@ -42,12 +42,12 @@ services:
       - db-primary
       - db-secondary
     environment:
-      SPRING_DATASOURCE_URL: ${DATABASE_URL}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db_primary:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       APP_JWT_SECRET: ${JWT_SECRET}
-      SERVER_PORT: ${PORT}
+      SERVER_PORT: ${PORT:-8080}
     ports:
       - "${PORT}:${PORT}"
     networks:
