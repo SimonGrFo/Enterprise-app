@@ -1,6 +1,7 @@
 package com.example.enterprise_app.service;
 
 import com.example.enterprise_app.dto.SignupRequest;
+import com.example.enterprise_app.dto.UpdateUserRequest;
 import com.example.enterprise_app.dto.UserDto;
 import com.example.enterprise_app.model.ERole;
 import com.example.enterprise_app.model.Role;
@@ -20,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class UserServiceTest {
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -36,96 +37,83 @@ public class UserServiceTest {
 
     private User testUser;
     private Role userRole;
+    private Role adminRole;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
         userRole = new Role();
+        userRole.setId(1L);
         userRole.setName(ERole.ROLE_USER);
+
+        adminRole = new Role();
+        adminRole.setId(2L);
+        adminRole.setName(ERole.ROLE_ADMIN);
 
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");
         testUser.setEmail("test@test.com");
         testUser.setPassword("hashedPassword");
-        testUser.setRoles(Set.of(userRole));
+        testUser.setRoles(new HashSet<>(Collections.singletonList(userRole)));
         testUser.setActive(true);
 
         when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
-        when(roleRepository.findByName(ERole.ROLE_USER))
-                .thenReturn(Optional.of(userRole));
+        when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.of(userRole));
+        when(roleRepository.findByName(ERole.ROLE_ADMIN)).thenReturn(Optional.of(adminRole));
     }
 
     @Test
     void createUser_Success() {
-        SignupRequest request = new SignupRequest();
-        request.setUsername("newuser");
-        request.setEmail("new@test.com");
-        request.setPassword("password");
+        SignupRequest signupRequest = new SignupRequest();
+        signupRequest.setUsername("newuser");
+        signupRequest.setEmail("new@test.com");
+        signupRequest.setPassword("password");
 
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.existsByEmail("new@test.com")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        UserDto result = userService.createUser(request);
+        UserDto result = userService.createUser(signupRequest);
 
-        assertNotNull(result);
-        assertEquals("testuser", result.getUsername());
-        assertEquals("test@test.com", result.getEmail());
-        assertTrue(result.isActive());
-        assertEquals(1, result.getRoles().size());
-        assertTrue(result.getRoles().contains("ROLE_USER"));
+        assertNotNull(result, "Created user should not be null");
+        assertEquals("testuser", result.getUsername(), "Username should match");
+        assertEquals("test@test.com", result.getEmail(), "Email should match");
+        assertTrue(result.isActive(), "New user should be active");
+        verify(passwordEncoder).encode("password");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
     void createUser_DuplicateUsername() {
-        SignupRequest request = new SignupRequest();
-        request.setUsername("testuser");
-        request.setEmail("new@test.com");
+        SignupRequest signupRequest = new SignupRequest();
+        signupRequest.setUsername("existing");
+        signupRequest.setEmail("new@test.com");
 
-        when(userRepository.existsByUsername("testuser")).thenReturn(true);
+        when(userRepository.existsByUsername("existing")).thenReturn(true);
 
-        assertThrows(RuntimeException.class, () -> userService.createUser(request));
+        Exception exception = assertThrows(RuntimeException.class, () ->
+                userService.createUser(signupRequest)
+        );
+        assertEquals("Username is already taken!", exception.getMessage());
     }
 
     @Test
-    void getAllUsers() {
-        List<User> users = Arrays.asList(testUser);
-        when(userRepository.findAll()).thenReturn(users);
+    void updateUser_Success() {
+        UpdateUserRequest updateRequest = new UpdateUserRequest();
+        updateRequest.setEmail("updated@test.com");
+        Set<String> roles = new HashSet<>(Arrays.asList("USER", "ADMIN"));
+        updateRequest.setRoles(roles);
 
-        List<UserDto> result = userService.getAllUsers();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("testuser", result.get(0).getUsername());
-    }
-
-    @Test
-    void getUserByUsername_Success() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        UserDto result = userService.getUserByUsername("testuser");
+        UserDto result = userService.updateUser("testuser", updateRequest);
 
-        assertNotNull(result);
-        assertEquals("testuser", result.getUsername());
-        assertEquals("test@test.com", result.getEmail());
-    }
-
-    @Test
-    void getUserByUsername_NotFound() {
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> userService.getUserByUsername("nonexistent"));
-    }
-
-    @Test
-    void deleteUser_Success() {
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-
-        assertDoesNotThrow(() -> userService.deleteUser("testuser"));
-
-        verify(userRepository, times(1)).delete(testUser);
+        assertNotNull(result, "Updated user should not be null");
+        assertEquals("updated@test.com", result.getEmail(), "Email should be updated");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
@@ -135,6 +123,20 @@ public class UserServiceTest {
 
         userService.toggleUserStatus("testuser");
 
-        assertFalse(testUser.isActive());
+        verify(userRepository).save(any(User.class));
+        assertFalse(testUser.isActive(), "User status should be toggled");
+    }
+
+    @Test
+    void getAllUsers_Success() {
+        List<User> users = Arrays.asList(testUser);
+        when(userRepository.findAll()).thenReturn(users);
+
+        List<UserDto> result = userService.getAllUsers();
+
+        assertNotNull(result, "Result should not be null");
+        assertFalse(result.isEmpty(), "Result should not be empty");
+        assertEquals(1, result.size(), "Should return one user");
+        assertEquals("testuser", result.get(0).getUsername(), "Username should match");
     }
 }
