@@ -47,9 +47,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       APP_JWT_SECRET: ${JWT_SECRET}
-      SERVER_PORT: ${PORT:-8080}
+      SERVER_PORT: ${PORT}
     ports:
-      - "${PORT:-8080}:${PORT:-8080}"
+      - "${PORT}:${PORT}"
     networks:
       - my_network
     healthcheck:
@@ -57,6 +57,18 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react_frontend_app
+    ports:
+      - "3000:80"
+    networks:
+      - my_network
+    depends_on:
+      - app
 
 volumes:
   postgres_data_primary:
