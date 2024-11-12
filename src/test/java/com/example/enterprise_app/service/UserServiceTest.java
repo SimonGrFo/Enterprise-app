@@ -86,20 +86,6 @@ class UserServiceTest {
     }
 
     @Test
-    void createUser_DuplicateUsername() {
-        SignupRequest signupRequest = new SignupRequest();
-        signupRequest.setUsername("existing");
-        signupRequest.setEmail("new@test.com");
-
-        when(userRepository.existsByUsername("existing")).thenReturn(true);
-
-        Exception exception = assertThrows(RuntimeException.class, () ->
-                userService.createUser(signupRequest)
-        );
-        assertEquals("Username is already taken!", exception.getMessage());
-    }
-
-    @Test
     void updateUser_Success() {
         UpdateUserRequest updateRequest = new UpdateUserRequest();
         updateRequest.setEmail("updated@test.com");

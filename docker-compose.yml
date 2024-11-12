@@ -1,9 +1,9 @@
-version: '3.8'
-
 services:
   db-primary:
     image: postgres:13
     container_name: postgres_db_primary
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -22,6 +22,8 @@ services:
   db-secondary:
     image: postgres:13
     container_name: postgres_db_secondary
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -34,6 +36,11 @@ services:
       - my_network
     depends_on:
       - db-primary
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
@@ -41,6 +48,8 @@ services:
     depends_on:
       - db-primary
       - db-secondary
+    env_file:
+      - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db_primary:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
@@ -53,10 +62,10 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:

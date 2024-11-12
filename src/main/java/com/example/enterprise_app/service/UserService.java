@@ -1,12 +1,14 @@
 package com.example.enterprise_app.service;
 
 import com.example.enterprise_app.dto.*;
+import com.example.enterprise_app.exception.*;
 import com.example.enterprise_app.model.ERole;
 import com.example.enterprise_app.model.Role;
 import com.example.enterprise_app.model.User;
 import com.example.enterprise_app.repository.RoleRepository;
 import com.example.enterprise_app.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,122 +18,147 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public UserDto createUser(SignupRequest signupRequest) {
+        log.debug("Creating new user with username: {}", signupRequest.getUsername());
+
+        validateNewUser(signupRequest);
+
+        User user = buildUserFromRequest(signupRequest);
+        User savedUser = userRepository.save(user);
+
+        log.info("Successfully created user with username: {}", savedUser.getUsername());
+        return convertToDto(savedUser);
+    }
+
+    private void validateNewUser(SignupRequest signupRequest) {
         if (userRepository.existsByUsername(signupRequest.getUsername())) {
-            throw new RuntimeException("Username is already taken!");
+            throw new UsernameAlreadyExistsException(signupRequest.getUsername());
         }
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
-            throw new RuntimeException("Email is already in use!");
+            throw new EmailAlreadyExistsException(signupRequest.getEmail());
         }
+    }
 
+    private User buildUserFromRequest(SignupRequest signupRequest) {
         User user = new User();
         user.setUsername(signupRequest.getUsername());
         user.setEmail(signupRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
+        user.setRoles(getRoles(signupRequest.getRoles()));
+        user.setActive(true);
+        return user;
+    }
 
-        Set<String> strRoles = signupRequest.getRoles();
+    private Set<Role> getRoles(Set<String> strRoles) {
         Set<Role> roles = new HashSet<>();
 
         if (strRoles == null || strRoles.isEmpty()) {
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Default role not found."));
-            roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                if ("admin".equals(role)) {
-                    Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                            .orElseThrow(() -> new RuntimeException("Admin role not found."));
-                    roles.add(adminRole);
-                } else {
-                    Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                            .orElseThrow(() -> new RuntimeException("User role not found."));
-                    roles.add(userRole);
-                }
-            });
+            roles.add(getDefaultRole());
+            return roles;
         }
 
-        user.setRoles(roles);
-        User savedUser = userRepository.save(user);
-        return convertToDto(savedUser);
+        strRoles.forEach(roleName -> {
+            roles.add("admin".equals(roleName) ? getAdminRole() : getUserRole());
+        });
+
+        return roles;
     }
 
+    private Role getDefaultRole() {
+        return roleRepository.findByName(ERole.ROLE_USER)
+                .orElseThrow(() -> new RoleNotFoundException("Default role not found"));
+    }
+
+    private Role getAdminRole() {
+        return roleRepository.findByName(ERole.ROLE_ADMIN)
+                .orElseThrow(() -> new RoleNotFoundException("Admin role not found"));
+    }
+
+    private Role getUserRole() {
+        return roleRepository.findByName(ERole.ROLE_USER)
+                .orElseThrow(() -> new RoleNotFoundException("User role not found"));
+    }
+
+    @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public UserDto getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return convertToDto(user);
+        return userRepository.findByUsername(username)
+                .map(this::convertToDto)
+                .orElseThrow(() -> new UserNotFoundException(username));
     }
 
     @Transactional
     public void deleteUser(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(username));
         userRepository.delete(user);
+        log.info("Deleted user with username: {}", username);
     }
 
     @Transactional
     public UserDto updateUser(String username, UpdateUserRequest updateRequest) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(username));
 
-        if (updateRequest.getEmail() != null && !updateRequest.getEmail().isEmpty()) {
-            if (!user.getEmail().equals(updateRequest.getEmail()) &&
-                    userRepository.existsByEmail(updateRequest.getEmail())) {
-                throw new RuntimeException("Email is already in use!");
+        updateUserEmail(user, updateRequest.getEmail());
+        updateUserRoles(user, updateRequest.getRoles());
+
+        User savedUser = userRepository.save(user);
+        log.info("Updated user with username: {}", username);
+        return convertToDto(savedUser);
+    }
+
+    private void updateUserEmail(User user, String newEmail) {
+        if (newEmail != null && !newEmail.isEmpty() && !newEmail.equals(user.getEmail())) {
+            if (userRepository.existsByEmail(newEmail)) {
+                throw new EmailAlreadyExistsException(newEmail);
             }
-            user.setEmail(updateRequest.getEmail());
+            user.setEmail(newEmail);
         }
+    }
 
-        if (updateRequest.getRoles() != null && !updateRequest.getRoles().isEmpty()) {
-            Set<Role> roles = new HashSet<>();
-            updateRequest.getRoles().forEach(roleName -> {
-                Role role = roleRepository.findByName(ERole.valueOf("ROLE_" + roleName.toUpperCase()))
-                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-                roles.add(role);
-            });
-            user.setRoles(roles);
+    private void updateUserRoles(User user, Set<String> newRoles) {
+        if (newRoles != null && !newRoles.isEmpty()) {
+            user.setRoles(getRoles(newRoles));
         }
-
-        return convertToDto(userRepository.save(user));
     }
 
     @Transactional
     public void changePassword(String username, ChangePasswordRequest request) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(username));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new RuntimeException("Current password is incorrect");
+            throw new InvalidPasswordException();
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+        log.info("Changed password for user: {}", username);
     }
 
     @Transactional
     public void toggleUserStatus(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(username));
         user.setActive(!user.isActive());
         userRepository.save(user);
+        log.info("Toggled status for user: {}. New status: {}", username, user.isActive());
     }
 
     private UserDto convertToDto(User user) {
