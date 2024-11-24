@@ -1,13 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+// src/components/Home.jsx
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { UserService } from '../services/UserService.js';
 
 const Home = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout } = useAuth();
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/users')
+    UserService.getAllUsers()
       .then(response => setUsers(response.data))
       .catch(error => console.error('Error fetching users:', error));
   }, []);
@@ -63,3 +64,5 @@ const Home = () => {
     </div>
   );
 };
+
+export default Home;
