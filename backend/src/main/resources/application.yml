@@ -4,7 +4,7 @@ spring:
       name: admin
       password: admin
   datasource:
-    url: jdbc:postgresql://localhost:5432/Chilling_ton
+    url: jdbc:postgresql://db:5432/Chilling_ton
     username: postgres
     password: wowiewowser
   jpa:
@@ -23,3 +23,7 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+jwt:
+  secret: 16O7TpZnQ8Nz1tzNW0q66lrHP2t1znNNWioFxohtOZSqeOvVSn1NdIw2fSv1K1OKSapLWhR6ntjBNcl630mXHQ
+  expiration: 3600000 # in milliseconds (e.g., 1 hour)
