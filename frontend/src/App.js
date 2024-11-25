@@ -11,9 +11,9 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen flex flex-col bg-gray-50">
           <Navbar />
-          <div className="container mx-auto px-4 py-8">
+          <main className="flex-grow container mx-auto p-4">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
@@ -27,7 +27,7 @@ function App() {
               />
               <Route path="/" element={<Navigate to="/home" replace />} />
             </Routes>
-          </div>
+          </main>
         </div>
       </Router>
     </AuthProvider>

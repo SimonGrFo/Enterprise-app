@@ -43,6 +43,8 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/health/**").permitAll()  // Allow health check endpoints
+                        .requestMatchers("/actuator/**").permitAll()    // Allow actuator endpoints if you're using them
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

@@ -12,9 +12,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-lg border-b border-gray-100">
-      <div className="container mx-auto px-6 py-4">
+    <nav className="bg-white shadow-md border-b border-gray-200 fixed top-0 left-0 w-full z-50">
+      <div className="container mx-auto px-6 py-6"> {/* Increased padding-y to 6 */}
         <div className="flex justify-between items-center">
+          {/* Logo */}
           <div className="flex items-center space-x-2">
             <Link
               to="/"
@@ -23,6 +24,8 @@ const Navbar = () => {
               My App
             </Link>
           </div>
+
+          {/* Links or User Actions */}
           <div className="flex items-center space-x-6">
             {user ? (
               <div className="flex items-center space-x-4">
@@ -31,7 +34,7 @@ const Navbar = () => {
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200 font-medium shadow-sm hover:shadow-md"
+                  className="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200 font-medium shadow-sm hover:shadow-md"
                 >
                   Logout
                 </button>
@@ -46,7 +49,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium shadow-sm hover:shadow-md"
+                  className="bg-blue-500 text-white px-5 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium shadow-sm hover:shadow-md"
                 >
                   Register
                 </Link>

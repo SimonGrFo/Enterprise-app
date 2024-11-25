@@ -33,9 +33,13 @@ services:
       POSTGRES_DB: Chilling_ton
     ports:
       - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
-
+volumes:
+  postgres_data:
+    driver: local
 
 networks:
   app-network:
