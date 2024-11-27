@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
+import ProfilePage from './pages/ProfilePage';
 import Header from './components/Header';
 
 function App() {
@@ -12,7 +13,7 @@ function App() {
       <Router>
         <div className="min-h-screen flex flex-col bg-gray-50">
           <Header />
-          <main className="flex-grow container mx-auto p-4">
+          <main className="flex-grow container mx-auto p-4 pt-16">
             <Routes>
               <Route path="/login" element={<AuthPage />} />
               <Route
@@ -20,6 +21,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <HomePage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <PrivateRoute>
+                    <ProfilePage />
                   </PrivateRoute>
                 }
               />

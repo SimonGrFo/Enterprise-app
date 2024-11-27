@@ -16,10 +16,6 @@ const HomePage = () => {
           <label className="block text-gray-700 font-bold mb-2">Username:</label>
           <p className="text-gray-600">{user.username}</p>
         </div>
-        <div>
-          <label className="block text-gray-700 font-bold mb-2">Email:</label>
-          <p className="text-gray-600">{user.email}</p>
-        </div>
       </div>
     </div>
   );
