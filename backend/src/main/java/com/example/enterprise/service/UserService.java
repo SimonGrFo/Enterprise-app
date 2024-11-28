@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
+
     @Autowired
     private UserRepository userRepository;
 
@@ -18,6 +19,11 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     public User registerUser(UserRegistrationDto registrationDto) {
+        // Validate password length before encoding
+        if (registrationDto.getPassword().length() < 6) {
+            throw new RuntimeException("Password must be at least 6 characters long");
+        }
+
         if (userRepository.existsByUsername(registrationDto.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
@@ -37,29 +43,27 @@ public class UserService {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        if (userUpdateDto.getUsername() != null
-                && !userUpdateDto.getUsername().equals(user.getUsername())
-                && userRepository.existsByUsername(userUpdateDto.getUsername())) {
-            throw new IllegalArgumentException("Username is already taken");
-        }
+        userUpdateDto.getUsername().ifPresent(newUsername -> {
+            if (!newUsername.equals(user.getUsername()) && userRepository.existsByUsername(newUsername)) {
+                throw new IllegalArgumentException("Username is already taken");
+            }
+            user.setUsername(newUsername);
+        });
 
-        if (userUpdateDto.getEmail() != null
-                && !userUpdateDto.getEmail().equals(user.getEmail())
-                && userRepository.existsByEmail(userUpdateDto.getEmail())) {
-            throw new IllegalArgumentException("Email is already registered");
-        }
+        userUpdateDto.getEmail().ifPresent(newEmail -> {
+            if (!newEmail.equals(user.getEmail()) && userRepository.existsByEmail(newEmail)) {
+                throw new IllegalArgumentException("Email is already registered");
+            }
+            user.setEmail(newEmail);
+        });
 
-        if (userUpdateDto.getUsername() != null && !userUpdateDto.getUsername().isEmpty()) {
-            user.setUsername(userUpdateDto.getUsername());
-        }
-        if (userUpdateDto.getEmail() != null && !userUpdateDto.getEmail().isEmpty()) {
-            user.setEmail(userUpdateDto.getEmail());
-        }
-        if (userUpdateDto.getPassword() != null && !userUpdateDto.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(userUpdateDto.getPassword()));
-        }
+        userUpdateDto.getPassword().ifPresent(newPassword -> {
+            if (newPassword.length() < 6) {
+                throw new IllegalArgumentException("Password must be at least 6 characters long");
+            }
+            user.setPassword(passwordEncoder.encode(newPassword));
+        });
 
         return userRepository.save(user);
     }
-
 }

@@ -1,31 +1,30 @@
 package com.example.enterprise.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+import java.util.Optional;
+
 public class UserUpdateDto {
-    private String username;
-    private String email;
-    private String password;
+    @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
+    private Optional<String> username = Optional.empty();
 
-    public String getUsername() {
-        return username;
-    }
+    @Email(message = "Email should be valid")
+    private Optional<String> email = Optional.empty();
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    @Size(min = 6, message = "Password must be at least 6 characters")
+    private Optional<String> password = Optional.empty();
 
-    public String getEmail() {
-        return email;
-    }
+    private String confirmationToken;
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public Optional<String> getUsername() { return username; }
+    public void setUsername(Optional<String> username) { this.username = username; }
 
-    public String getPassword() {
-        return password;
-    }
+    public Optional<String> getEmail() { return email; }
+    public void setEmail(Optional<String> email) { this.email = email; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public Optional<String> getPassword() { return password; }
+    public void setPassword(Optional<String> password) { this.password = password; }
+
+    public String getConfirmationToken() { return confirmationToken; }
+    public void setConfirmationToken(String confirmationToken) { this.confirmationToken = confirmationToken; }
 }

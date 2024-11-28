@@ -1,11 +1,9 @@
 package com.example.enterprise.dto;
 
-import java.util.Set;
-
 public class AuthenticationResponse {
-    private String token;
-    private String username;
-    private String email;
+    private final String token;
+    private final String username;
+    private final String email;
 
     public AuthenticationResponse(String token, String username, String email) {
         this.token = token;

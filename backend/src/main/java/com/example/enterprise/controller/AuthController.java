@@ -1,6 +1,5 @@
 package com.example.enterprise.controller;
 
-import com.example.enterprise.dto.AuthenticationRequest;
 import com.example.enterprise.dto.AuthenticationResponse;
 import com.example.enterprise.dto.UserRegistrationDto;
 import com.example.enterprise.dto.LoginDto;
@@ -49,12 +48,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody AuthenticationRequest request) {
+    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginDto loginDto) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
-                            request.getPassword()
+                            loginDto.getUsername(),
+                            loginDto.getPassword()
                     )
             );
 
