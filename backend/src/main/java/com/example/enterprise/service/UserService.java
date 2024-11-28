@@ -1,5 +1,6 @@
 package com.example.enterprise.service;
 
+import com.example.enterprise.dto.UserDeletionDto;
 import com.example.enterprise.dto.UserUpdateDto;
 import com.example.enterprise.model.User;
 import com.example.enterprise.repository.UserRepository;
@@ -39,31 +40,28 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateUser(String currentUsername, UserUpdateDto userUpdateDto) {
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public User updateUser(String username, UserUpdateDto userUpdateDto) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        userUpdateDto.getUsername().ifPresent(newUsername -> {
-            if (!newUsername.equals(user.getUsername()) && userRepository.existsByUsername(newUsername)) {
-                throw new IllegalArgumentException("Username is already taken");
-            }
-            user.setUsername(newUsername);
-        });
-
-        userUpdateDto.getEmail().ifPresent(newEmail -> {
-            if (!newEmail.equals(user.getEmail()) && userRepository.existsByEmail(newEmail)) {
-                throw new IllegalArgumentException("Email is already registered");
-            }
-            user.setEmail(newEmail);
-        });
-
-        userUpdateDto.getPassword().ifPresent(newPassword -> {
-            if (newPassword.length() < 6) {
-                throw new IllegalArgumentException("Password must be at least 6 characters long");
-            }
-            user.setPassword(passwordEncoder.encode(newPassword));
-        });
+        userUpdateDto.getUsername().ifPresent(user::setUsername);
+        userUpdateDto.getEmail().ifPresent(user::setEmail);
+        userUpdateDto.getPassword().ifPresent(password -> user.setPassword(passwordEncoder.encode(password)));
 
         return userRepository.save(user);
     }
+
+
+    public void deleteUser(Long userId, UserDeletionDto deletionDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(deletionDto.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Incorrect password");
+        }
+
+        userRepository.delete(user); // Perform deletion
+    }
+
+
 }
