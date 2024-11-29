@@ -4,7 +4,6 @@ import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
-import ProfilePage from './pages/ProfilePage';
 import Header from './components/Header';
 
 function App() {
@@ -21,14 +20,6 @@ function App() {
                 element={
                   <PrivateRoute>
                     <HomePage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <PrivateRoute>
-                    <ProfilePage />
                   </PrivateRoute>
                 }
               />

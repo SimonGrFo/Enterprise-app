@@ -1,51 +1,74 @@
 package com.example.enterprise.controller;
 
-import com.example.enterprise.dto.UserDeletionDto;
-import com.example.enterprise.dto.UserUpdateDto;
+import com.example.enterprise.dto.AuthenticationResponse;
+import com.example.enterprise.dto.UserRegistrationDto;
+import com.example.enterprise.dto.LoginDto;
 import com.example.enterprise.model.User;
+import com.example.enterprise.security.CustomUserDetails;
+import com.example.enterprise.service.JwtService;
 import com.example.enterprise.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import java.security.Principal;
-import com.example.enterprise.repository.UserRepository;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @Autowired
     private UserService userService;
 
     @Autowired
-    private UserRepository userRepository; // Injecting UserRepository
+    private JwtService jwtService;
 
-    // Update user details (username/email/password updates)
-    @PutMapping("/update")
-    public ResponseEntity<?> updateUser(@RequestBody UserUpdateDto userUpdateDto, Principal principal) {
+    @PostMapping("/register")   //REGISTER A USER INTO THE DATABASE
+    public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto) {
         try {
-            User updatedUser = userService.updateUser(principal.getName(), userUpdateDto);
-            return ResponseEntity.ok(updatedUser);
+            User user = userService.registerUser(registrationDto);
+            String jwt = jwtService.generateToken(user.getUsername());
+            return ResponseEntity.ok(new AuthenticationResponse(
+                    jwt,
+                    user.getUsername(),
+                    user.getEmail()
+            ));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteUser(@RequestBody UserDeletionDto deletionDto, Principal principal) {
+    @PostMapping("/login")   //LOGIN TO A USER REGISTERED IN THE DATABASE
+    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginDto loginDto) {
         try {
-            // Get the username from the Principal and fetch the user directly in the controller
-            String username = principal.getName();
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginDto.getUsername(),
+                            loginDto.getPassword()
+                    )
+            );
 
-            userService.deleteUser(user.getId(), deletionDto);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User account deleted successfully.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting account: " + e.getMessage());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            String jwt = jwtService.generateToken(userDetails.getUsername());
+
+            return ResponseEntity.ok(new AuthenticationResponse(
+                    jwt,
+                    userDetails.getUsername(),
+                    userDetails.getUser().getEmail()
+            ));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid username or password");
         }
     }
-
-
 }

@@ -1,12 +1,9 @@
 package com.example.enterprise.service;
 
-import com.example.enterprise.dto.UserDeletionDto;
-import com.example.enterprise.dto.UserUpdateDto;
 import com.example.enterprise.model.User;
 import com.example.enterprise.repository.UserRepository;
 import com.example.enterprise.dto.UserRegistrationDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -39,29 +36,4 @@ public class UserService {
 
         return userRepository.save(user);
     }
-
-    public User updateUser(String username, UserUpdateDto userUpdateDto) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        userUpdateDto.getUsername().ifPresent(user::setUsername);
-        userUpdateDto.getEmail().ifPresent(user::setEmail);
-        userUpdateDto.getPassword().ifPresent(password -> user.setPassword(passwordEncoder.encode(password)));
-
-        return userRepository.save(user);
-    }
-
-
-    public void deleteUser(Long userId, UserDeletionDto deletionDto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!passwordEncoder.matches(deletionDto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Incorrect password");
-        }
-
-        userRepository.delete(user); // Perform deletion
-    }
-
-
 }
