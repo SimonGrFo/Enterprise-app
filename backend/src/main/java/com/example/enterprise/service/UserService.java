@@ -1,6 +1,5 @@
 package com.example.enterprise.service;
 
-import com.example.enterprise.dto.UserDeletionDto;
 import com.example.enterprise.model.User;
 import com.example.enterprise.repository.UserRepository;
 import com.example.enterprise.dto.UserRegistrationDto;
@@ -18,7 +17,6 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     public User registerUser(UserRegistrationDto registrationDto) {
-        // Validate password length before encoding
         if (registrationDto.getPassword().length() < 6) {
             throw new RuntimeException("Password must be at least 6 characters long");
         }
@@ -38,16 +36,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUser(UserDeletionDto deletionDto) {
-        User user = userRepository.findByUsername(deletionDto.getUsername())
+    public void deleteUserById(Long id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Verify the provided password matches the user's stored password
-        if (!passwordEncoder.matches(deletionDto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        // Delete the user from the database
         userRepository.delete(user);
     }
+
+
 }

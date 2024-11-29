@@ -1,9 +1,9 @@
 package com.example.enterprise.controller;
 
 import com.example.enterprise.dto.AuthenticationResponse;
+import com.example.enterprise.dto.UserIdDeletionDto;
 import com.example.enterprise.dto.UserRegistrationDto;
 import com.example.enterprise.dto.LoginDto;
-import com.example.enterprise.dto.UserDeletionDto;
 import com.example.enterprise.model.User;
 import com.example.enterprise.security.CustomUserDetails;
 import com.example.enterprise.service.JwtService;
@@ -74,12 +74,18 @@ public class UserController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteUser(@Valid @RequestBody UserDeletionDto deletionDto) {
+    public ResponseEntity<?> deleteUser() {
         try {
-            userService.deleteUser(deletionDto);
+            // Retrieve the authenticated user's details
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getUser().getId(); // Ensure User entity has getId()
+
+            userService.deleteUserById(userId);
             return ResponseEntity.ok("User account deleted successfully");
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
 }
