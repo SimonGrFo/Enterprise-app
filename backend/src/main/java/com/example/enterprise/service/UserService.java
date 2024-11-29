@@ -1,5 +1,6 @@
 package com.example.enterprise.service;
 
+import com.example.enterprise.dto.UserDeletionDto;
 import com.example.enterprise.model.User;
 import com.example.enterprise.repository.UserRepository;
 import com.example.enterprise.dto.UserRegistrationDto;
@@ -35,5 +36,18 @@ public class UserService {
         user.setEmail(registrationDto.getEmail());
 
         return userRepository.save(user);
+    }
+
+    public void deleteUser(UserDeletionDto deletionDto) {
+        User user = userRepository.findByUsername(deletionDto.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Verify the provided password matches the user's stored password
+        if (!passwordEncoder.matches(deletionDto.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        // Delete the user from the database
+        userRepository.delete(user);
     }
 }

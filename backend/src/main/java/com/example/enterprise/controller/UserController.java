@@ -3,6 +3,7 @@ package com.example.enterprise.controller;
 import com.example.enterprise.dto.AuthenticationResponse;
 import com.example.enterprise.dto.UserRegistrationDto;
 import com.example.enterprise.dto.LoginDto;
+import com.example.enterprise.dto.UserDeletionDto;
 import com.example.enterprise.model.User;
 import com.example.enterprise.security.CustomUserDetails;
 import com.example.enterprise.service.JwtService;
@@ -32,7 +33,7 @@ public class UserController {
     @Autowired
     private JwtService jwtService;
 
-    @PostMapping("/register")   //REGISTER A USER INTO THE DATABASE
+    @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto) {
         try {
             User user = userService.registerUser(registrationDto);
@@ -47,7 +48,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/login")   //LOGIN TO A USER REGISTERED IN THE DATABASE
+    @PostMapping("/login")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginDto loginDto) {
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -69,6 +70,16 @@ public class UserController {
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Invalid username or password");
+        }
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteUser(@Valid @RequestBody UserDeletionDto deletionDto) {
+        try {
+            userService.deleteUser(deletionDto);
+            return ResponseEntity.ok("User account deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }
