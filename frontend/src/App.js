@@ -2,10 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import Header from './components/Header';
+
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
-import AccountSettings from './components/AccountSettings'; // Import AccountSettings
-import Header from './components/Header';
+import ProfilePage from './pages/ProfilePage'; // Adjust the path as needed
 
 function App() {
     return (
@@ -25,10 +26,10 @@ function App() {
                                 }
                             />
                             <Route
-                                path="/account-settings"
+                                path="/profile"
                                 element={
                                     <PrivateRoute>
-                                        <AccountSettings />
+                                        <ProfilePage />
                                     </PrivateRoute>
                                 }
                             />
