@@ -16,7 +16,7 @@ const Header = () => {
   };
 
   const handleHome = () => {
-    navigate('/home'); // Adjust to your home page route
+    navigate('/home');
   };
 
   return (
