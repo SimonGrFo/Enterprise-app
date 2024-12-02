@@ -21,21 +21,17 @@ public class MusicController {
 
     @GetMapping("/search")
     public ResponseEntity<?> searchTracks(@RequestParam String track) {
-        System.out.println("Received search request for track: " + track);
-
+        System.out.println("Track search requested for: " + track);
         RestTemplate restTemplate = new RestTemplate();
         String url = String.format("%s?method=track.search&track=%s&api_key=%s&format=json",
                 lastFmApiUrl, track, apiKey);
 
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-            System.out.println("Response from Last.fm: " + response.getStatusCode());
             return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching tracks");
         }
     }
 }
-
 
