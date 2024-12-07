@@ -76,10 +76,9 @@ public class UserController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteUser() {
         try {
-            // Retrieve the authenticated user's details
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            Long userId = userDetails.getUser().getId(); // Ensure User entity has getId()
+            Long userId = userDetails.getUser().getId();
 
             userService.deleteUserById(userId);
             return ResponseEntity.ok("User account deleted successfully");
