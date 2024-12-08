@@ -19,10 +19,14 @@ public class MusicController {
     @Value("${lastfm.api.url}")
     private String lastFmApiUrl;
 
+    private final RestTemplate restTemplate;
+
+    public MusicController(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
     @GetMapping("/search")
     public ResponseEntity<?> searchTracks(@RequestParam String track) {
-        System.out.println("Track search requested for: " + track);
-        RestTemplate restTemplate = new RestTemplate();
         String url = String.format("%s?method=track.search&track=%s&api_key=%s&format=json",
                 lastFmApiUrl, track, apiKey);
 
@@ -34,4 +38,5 @@ public class MusicController {
         }
     }
 }
+
 

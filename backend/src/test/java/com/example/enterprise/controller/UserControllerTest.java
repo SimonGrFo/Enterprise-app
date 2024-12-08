@@ -92,7 +92,7 @@ class UserControllerTest {
         User mockUser = new User();
         mockUser.setUsername("testuser");
         mockUser.setEmail("test@example.com");
-        when(mockUserDetails.getUser()).thenReturn(mockUser);
+        when(mockUserDetails.user()).thenReturn(mockUser);
 
         when(jwtService.generateToken("testuser")).thenReturn("mocked-jwt-token");
 
@@ -125,7 +125,7 @@ class UserControllerTest {
         Authentication mockAuthentication = mock(Authentication.class);
 
         when(mockAuthentication.getPrincipal()).thenReturn(mockUserDetails);
-        when(mockUserDetails.getUser()).thenReturn(new User() {{
+        when(mockUserDetails.user()).thenReturn(new User() {{
             setId(1L);
             setUsername("testuser");
         }});
@@ -145,7 +145,7 @@ class UserControllerTest {
         Authentication mockAuthentication = mock(Authentication.class);
 
         when(mockAuthentication.getPrincipal()).thenReturn(mockUserDetails);
-        when(mockUserDetails.getUser()).thenReturn(new User() {{
+        when(mockUserDetails.user()).thenReturn(new User() {{
             setId(1L);
             setUsername("testuser");
         }});
@@ -177,7 +177,7 @@ class UserControllerTest {
 
     @Test
     public void testLoginUser_invalidInput() {
-        LoginDto loginDto = new LoginDto("", ""); // Empty username and password
+        LoginDto loginDto = new LoginDto("", "");
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid username or password"));

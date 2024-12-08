@@ -1,7 +1,6 @@
 package com.example.enterprise.controller;
 
 import com.example.enterprise.dto.AuthenticationResponse;
-import com.example.enterprise.dto.UserIdDeletionDto;
 import com.example.enterprise.dto.UserRegistrationDto;
 import com.example.enterprise.dto.LoginDto;
 import com.example.enterprise.model.User;
@@ -65,7 +64,7 @@ public class UserController {
             return ResponseEntity.ok(new AuthenticationResponse(
                     jwt,
                     userDetails.getUsername(),
-                    userDetails.getUser().getEmail()
+                    userDetails.user().getEmail()
             ));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -78,7 +77,7 @@ public class UserController {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            Long userId = userDetails.getUser().getId();
+            Long userId = userDetails.user().getId();
 
             userService.deleteUserById(userId);
             return ResponseEntity.ok("User account deleted successfully");
